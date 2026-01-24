@@ -1,186 +1,259 @@
-/* Rick's Oilfield Hauling - Purple/Black Theme */
+/* Rick's Oilfield Hauling - Premium Dark Theme */
 
+/* Import Google Fonts - Similar to Rick's branding */
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Hide Streamlit defaults */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
 
-/* Metrics cards */
+/* Global font */
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Metrics cards - Glass morphism */
 div[data-testid="stMetric"] {
-    background: linear-gradient(135deg, #1A1A1A 0%, #252525 100%);
-    border: 1px solid #333333;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(20, 20, 20, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+    transition: all 0.3s ease;
+}
+
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.4);
 }
 
 div[data-testid="stMetric"] label {
+    font-family: 'Oswald', sans-serif !important;
     color: #9CA3AF !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
     text-transform: uppercase !important;
-    letter-spacing: 1px !important;
+    letter-spacing: 2px !important;
 }
 
 div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-    font-size: 36px !important;
-    font-weight: 800 !important;
-    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+    font-family: 'Russo One', sans-serif !important;
+    font-size: 42px !important;
+    font-weight: 400 !important;
+    background: linear-gradient(135deg, #A78BFA, #8B5CF6, #7C3AED);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-/* Buttons - Purple gradient */
+/* Buttons - Glowing purple */
 .stButton > button {
+    font-family: 'Oswald', sans-serif !important;
     background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #A78BFA 100%);
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 12px 28px;
-    font-weight: 700;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-weight: 600;
     font-size: 14px;
-    letter-spacing: 0.5px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 
 .stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
-/* Form inputs */
+.stButton > button:active {
+    transform: translateY(-1px);
+}
+
+/* Form inputs - Sleek dark */
 .stTextInput > div > div > input,
 .stSelectbox > div > div > div,
 .stNumberInput > div > div > input,
 .stTextArea > div > div > textarea {
-    background-color: #1A1A1A !important;
-    border: 1px solid #333333 !important;
-    border-radius: 8px !important;
+    font-family: 'Inter', sans-serif !important;
+    background: linear-gradient(135deg, #141414 0%, #1A1A1A 100%) !important;
+    border: 1px solid #2A2A2A !important;
+    border-radius: 12px !important;
     color: #FAFAFA !important;
-    font-size: 14px !important;
+    font-size: 15px !important;
+    padding: 12px 16px !important;
+    transition: all 0.3s ease !important;
 }
 
 .stTextInput > div > div > input:focus,
 .stSelectbox > div > div > div:focus,
 .stTextArea > div > div > textarea:focus {
     border-color: #8B5CF6 !important;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.1) !important;
 }
 
 /* Labels */
-.stTextInput label, .stSelectbox label, .stNumberInput label, .stTextArea label {
+.stTextInput label, .stSelectbox label, .stNumberInput label, .stTextArea label, .stDateInput label, .stCheckbox label {
+    font-family: 'Oswald', sans-serif !important;
     color: #9CA3AF !important;
-    font-weight: 600 !important;
-    font-size: 13px !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
+    letter-spacing: 1.5px !important;
 }
 
-/* Tabs */
+/* Tabs - Premium style */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 4px;
-    background-color: #1A1A1A;
-    border-radius: 12px;
-    padding: 6px;
-    border: 1px solid #333333;
+    gap: 8px;
+    background: linear-gradient(135deg, #0F0F0F, #141414);
+    border-radius: 16px;
+    padding: 8px;
+    border: 1px solid #2A2A2A;
 }
 
 .stTabs [data-baseweb="tab"] {
+    font-family: 'Oswald', sans-serif !important;
     background-color: transparent;
-    border-radius: 8px;
-    padding: 12px 24px;
-    color: #9CA3AF;
-    font-weight: 600;
-    font-size: 14px;
+    border-radius: 12px;
+    padding: 14px 28px;
+    color: #6B7280;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: #A78BFA;
+    background: rgba(139, 92, 246, 0.1);
 }
 
 .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg, #7C3AED, #8B5CF6) !important;
     color: white !important;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
 }
 
 /* Sidebar */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0A0A0A 0%, #121212 100%);
-    border-right: 1px solid #252525;
+    background: linear-gradient(180deg, #0A0A0A 0%, #0F0F0F 50%, #0A0A0A 100%);
+    border-right: 1px solid #1A1A1A;
 }
 
-section[data-testid="stSidebar"] .stSelectbox label,
-section[data-testid="stSidebar"] .stTextInput label {
-    color: #9CA3AF !important;
+section[data-testid="stSidebar"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%);
+    pointer-events: none;
 }
 
-/* Success message */
+/* Messages */
 .stSuccess {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
-    border: 1px solid #22C55E;
-    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
 }
 
-/* Warning message */
 .stWarning {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
-    border: 1px solid #8B5CF6;
-    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
 }
 
-/* Error message */
 .stError {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-    border: 1px solid #EF4444;
-    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
 }
 
-/* Info message */
 .stInfo {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
-    border: 1px solid #8B5CF6;
-    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
 }
 
 /* Code blocks */
 .stCodeBlock {
-    background-color: #1A1A1A !important;
-    border: 1px solid #333333 !important;
-    border-radius: 8px !important;
-}
-
-/* Dataframes */
-.stDataFrame {
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #333333;
+    background: linear-gradient(135deg, #0F0F0F, #141414) !important;
+    border: 1px solid #2A2A2A !important;
+    border-radius: 12px !important;
 }
 
 /* Headings */
 h1 {
-    font-size: 2.5rem !important;
-    font-weight: 800 !important;
-    background: linear-gradient(135deg, #8B5CF6, #A78BFA, #C4B5FD);
+    font-family: 'Russo One', sans-serif !important;
+    font-size: 2.8rem !important;
+    font-weight: 400 !important;
+    background: linear-gradient(135deg, #C4B5FD, #A78BFA, #8B5CF6, #7C3AED);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
 }
 
-h2, h3 {
+h2 {
+    font-family: 'Oswald', sans-serif !important;
     color: #FFFFFF !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
+    letter-spacing: 1px !important;
+}
+
+h3 {
+    font-family: 'Oswald', sans-serif !important;
+    color: #E5E7EB !important;
+    font-weight: 500 !important;
+    font-size: 1.3rem !important;
+    letter-spacing: 0.5px !important;
 }
 
 /* Dividers */
 hr {
-    border-color: #333333 !important;
-    margin: 2rem 0 !important;
-}
-
-/* Checkboxes */
-.stCheckbox label span {
-    color: #FAFAFA !important;
+    border: none !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, #2A2A2A, rgba(139, 92, 246, 0.3), #2A2A2A, transparent) !important;
+    margin: 2.5rem 0 !important;
 }
 
 /* Form container */
 [data-testid="stForm"] {
-    background: linear-gradient(135deg, #1A1A1A, #202020);
-    border: 1px solid #333333;
+    background: linear-gradient(135deg, #0F0F0F, #141414);
+    border: 1px solid #2A2A2A;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Dataframes */
+.stDataFrame {
     border-radius: 16px;
-    padding: 24px;
+    overflow: hidden;
+    border: 1px solid #2A2A2A;
+}
+
+/* Expander */
+.streamlit-expanderHeader {
+    font-family: 'Oswald', sans-serif !important;
+    background: linear-gradient(135deg, #141414, #1A1A1A);
+    border-radius: 12px;
+}
+
+/* Caption text */
+.stCaption {
+    font-family: 'Inter', sans-serif !important;
+    color: #6B7280 !important;
+}
+
+/* Markdown paragraphs */
+.stMarkdown p {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.7;
 }
