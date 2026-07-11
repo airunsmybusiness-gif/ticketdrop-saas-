@@ -1,17 +1,22 @@
+import logging
 import streamlit as st
 import pandas as pd
 from db import fetch_all
 from services.status import update_ticket_status, StatusError
 from workers.axon_export import generate_axon_csv, get_export_history
-st.set_page_config(page_title="AR / Billing", page_icon="💰", layout="wide")
+import auth
+import branding
+st.set_page_config(page_title="AR / Billing · TicketDrop", page_icon="💰", layout="wide")
+log = logging.getLogger("ticketdrop.ar")
+
+branding.apply_branding(auth.current_user()["company_id"] if auth.current_user() else None)
+user = auth.require("ar", "admin")
+company_id = user["company_id"]
+user_id, user_name, role = user["user_id"], user["user_name"], user["role"]
+branding.apply_branding(company_id)
+auth.sidebar_account()
+
 st.title("💰 AR / Billing")
-password = st.sidebar.text_input("Password", type="password")
-if password != st.secrets.get("AR_PASSWORD", "billing123"):
-    st.warning("Enter AR password")
-    st.stop()
-company_id = st.session_state.get('company_id', 1)
-user_id, user_name, role = 3, "AR", "ar"
-st.sidebar.success("✓ Logged in as AR")
 tab1, tab2, tab3, tab4 = st.tabs(["📋 Review Tickets", "✅ Ready for AXON", "📤 Export to AXON", "📊 Export History"])
 with tab1:
     st.markdown("### Submitted Tickets (Need Verification)")
@@ -71,14 +76,20 @@ with tab3:
     if count > 0:
         st.warning(f"⚠️ This will mark {count} tickets as INVOICED. This cannot be undone.")
         if st.button("🚀 Generate AXON CSV", type="primary", use_container_width=True):
-            result = generate_axon_csv(company_id, user_id, user_name)
+            try:
+                result = generate_axon_csv(company_id, user_id, user_name)
+            except Exception as e:
+                log.exception("AXON export failed for company %s", company_id)
+                st.error("Export failed. No tickets were marked as invoiced — please try again.")
+                st.caption(f"Details: {e}")
+                result = None
             if result and result[0]:
                 filename, csv_content, ticket_count, total_vol, checksum = result
                 st.success(f"✅ Exported {ticket_count} tickets ({total_vol:,.2f} m³)")
                 st.download_button(label=f"📥 Download {filename}", data=csv_content, file_name=filename, mime="text/csv", type="primary", use_container_width=True)
                 st.code(f"Checksum (SHA256): {checksum}")
-            else:
-                st.error("Export failed")
+            elif result is not None:
+                st.error("Nothing to export.")
     else:
         st.info("No tickets ready for export. Verify tickets and mark them 'Ready for Invoice' first.")
 with tab4:

@@ -1,9 +1,17 @@
-/* Rick's Oilfield Hauling - Premium Dark Theme */
+/* TicketDrop - Premium Dark Theme (brand color via CSS variables) */
 
 /* Import Google Fonts - Similar to Rick's branding */
 @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* Hide Streamlit defaults */
+:root {
+    --brand: #8B5CF6;
+    --brand-light: #A78BFA;
+    --brand-lighter: #C4B5FD;
+    --brand-dark: #7C3AED;
+    --brand-rgb: 139, 92, 246;
+}
+
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
@@ -15,19 +23,19 @@ html, body, [class*="css"] {
 
 /* Metrics cards - Glass morphism */
 div[data-testid="stMetric"] {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(20, 20, 20, 0.9) 100%);
+    background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.1) 0%, rgba(20, 20, 20, 0.9) 100%);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(var(--brand-rgb), 0.2);
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 8px 32px rgba(var(--brand-rgb), 0.15);
     transition: all 0.3s ease;
 }
 
 div[data-testid="stMetric"]:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.25);
-    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 12px 40px rgba(var(--brand-rgb), 0.25);
+    border-color: rgba(var(--brand-rgb), 0.4);
 }
 
 div[data-testid="stMetric"] label {
@@ -43,7 +51,7 @@ div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
     font-family: 'Russo One', sans-serif !important;
     font-size: 42px !important;
     font-weight: 400 !important;
-    background: linear-gradient(135deg, #A78BFA, #8B5CF6, #7C3AED);
+    background: linear-gradient(135deg, var(--brand-light), var(--brand), var(--brand-dark));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -51,7 +59,7 @@ div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
 /* Buttons - Glowing purple */
 .stButton > button {
     font-family: 'Oswald', sans-serif !important;
-    background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #A78BFA 100%);
+    background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 50%, var(--brand-light) 100%);
     color: white;
     border: none;
     border-radius: 12px;
@@ -61,12 +69,12 @@ div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
     letter-spacing: 1.5px;
     text-transform: uppercase;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    box-shadow: 0 4px 20px rgba(var(--brand-rgb), 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 
 .stButton > button:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow: 0 8px 30px rgba(var(--brand-rgb), 0.6), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 .stButton > button:active {
@@ -91,8 +99,8 @@ div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
 .stTextInput > div > div > input:focus,
 .stSelectbox > div > div > div:focus,
 .stTextArea > div > div > textarea:focus {
-    border-color: #8B5CF6 !important;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.1) !important;
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15), 0 0 20px rgba(var(--brand-rgb), 0.1) !important;
 }
 
 /* Labels */
@@ -128,14 +136,14 @@ div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
 }
 
 .stTabs [data-baseweb="tab"]:hover {
-    color: #A78BFA;
-    background: rgba(139, 92, 246, 0.1);
+    color: var(--brand-light);
+    background: rgba(var(--brand-rgb), 0.1);
 }
 
 .stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #7C3AED, #8B5CF6) !important;
+    background: linear-gradient(135deg, var(--brand-dark), var(--brand)) !important;
     color: white !important;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 4px 15px rgba(var(--brand-rgb), 0.4);
 }
 
 /* Sidebar */
@@ -151,7 +159,7 @@ section[data-testid="stSidebar"]::before {
     left: 0;
     right: 0;
     height: 200px;
-    background: linear-gradient(180deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%);
+    background: linear-gradient(180deg, rgba(var(--brand-rgb), 0.05) 0%, transparent 100%);
     pointer-events: none;
 }
 
@@ -177,8 +185,8 @@ section[data-testid="stSidebar"]::before {
 }
 
 .stInfo {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.15), rgba(var(--brand-rgb), 0.05));
+    border: 1px solid rgba(var(--brand-rgb), 0.3);
     border-radius: 12px;
 }
 
@@ -194,10 +202,10 @@ h1 {
     font-family: 'Russo One', sans-serif !important;
     font-size: 2.8rem !important;
     font-weight: 400 !important;
-    background: linear-gradient(135deg, #C4B5FD, #A78BFA, #8B5CF6, #7C3AED);
+    background: linear-gradient(135deg, var(--brand-lighter), var(--brand-light), var(--brand), var(--brand-dark));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+    text-shadow: 0 0 40px rgba(var(--brand-rgb), 0.3);
 }
 
 h2 {
@@ -219,7 +227,7 @@ h3 {
 hr {
     border: none !important;
     height: 1px !important;
-    background: linear-gradient(90deg, transparent, #2A2A2A, rgba(139, 92, 246, 0.3), #2A2A2A, transparent) !important;
+    background: linear-gradient(90deg, transparent, #2A2A2A, rgba(var(--brand-rgb), 0.3), #2A2A2A, transparent) !important;
     margin: 2.5rem 0 !important;
 }
 

@@ -6,6 +6,24 @@ _Prepared for turning TicketDrop into a professional, multi-company product you 
 
 ---
 
+## ✅ What was just built (this round)
+
+The biggest security, login, and branding items are **done and tested against a real PostgreSQL database**:
+
+- **Secure Name + PIN login** (`auth.py`) — PINs are stored as bcrypt **hashes**, not plaintext. The 4 shared role passwords are gone. Each login is scoped to one company.
+- **Role-based access** — drivers can't open Dispatch/AR/Settings; verified a driver is blocked from Settings.
+- **Per-company branding** (`branding.py` + `companies` table) — company name, tagline, and color come from the database. The whole theme (`style.css` now uses CSS variables) follows the company's color. No "Rick's" hardcoded anywhere.
+- **Config from environment variables** (`db.py`) — `DATABASE_URL` reads from the host first (Railway/Render), then local secrets. Nothing secret in code.
+- **Error handling + logging** — silent `except: pass` blocks are replaced with logged, friendly errors across Dispatch, Driver, AR, and Settings.
+- **Reliability fix** — new loads use `INSERT ... RETURNING id` instead of `MAX(id)` (no more race between two dispatchers).
+- **Setup made copy-paste simple** — `schema.sql` (safe to run on your existing DB) + `seed.sql` (starter logins with pre-hashed PINs) + `DEPLOY_RAILWAY.md` (step-by-step).
+
+**How it was verified:** every page was run headlessly against a live Postgres DB with no exceptions; the dashboard rendered its 5 metrics; RBAC blocked a driver from Settings; correct/wrong/legacy PINs behaved correctly; and the full business pipeline (dispatch → accept → start → submit ticket → verify → AXON export → invoiced) ran end-to-end.
+
+**What's left for you (can't be done from here):** rotate the Supabase password, run the two SQL files in Supabase, and click through the Railway deploy — all in `DEPLOY_RAILWAY.md`.
+
+---
+
 ## 1. Honest assessment of the current code
 
 ### What's genuinely good ✅
@@ -153,17 +171,17 @@ For your constraints (simple, reliable, cheap, Postgres already on Supabase), th
 2. **Confirm the secrets fix** (done in this branch: `secrets.toml` is now gitignored, with a safe `.example` template). — _Done ✅_
 3. **Move secrets to environment variables** on your host instead of a file. — _Easy_
 
-### 🟠 Do this month (make it real & multi-company)
-4. **Add real login with hashed passwords** (`auth.py` + `passlib[bcrypt]`), replacing the 4 shared passwords. Login sets `company_id`. — _Medium_
-5. **Add the `companies` table + `branding.py`** so name/logo/color come from the database, not hardcoded "Rick's". — _Medium_
-6. **Replace all `except: pass` with logged, friendly errors**, and add basic `logging`. — _Easy_
-7. **Remove the hardcoded `sys.path.insert` lines** in all 6 files. — _Easy_
+### 🟠 Make it real & multi-company
+4. ~~**Add real login with hashed PINs** (`auth.py` + `bcrypt`), replacing the 4 shared passwords. Login sets `company_id`.~~ — **✅ Done**
+5. ~~**Add the `companies` table + `branding.py`** so name/color come from the database, not hardcoded "Rick's".~~ — **✅ Done**
+6. ~~**Replace all `except: pass` with logged, friendly errors**, and add basic `logging`.~~ — **✅ Done**
+7. ~~**Remove the hardcoded `sys.path.insert` lines** in all 6 files.~~ — **✅ Done**
 
 ### 🟡 Do when you have your first customer (polish)
-8. Fix the `MAX(id)` race using `RETURNING id`. — _Easy_
-9. Add indexes on `(company_id, status)` for speed. — _Easy_
-10. Move the big inline HTML into a shared branding helper. — _Medium_
-11. Automate driver notifications (Twilio SMS) instead of copy-paste. — _Medium_
+8. ~~Fix the `MAX(id)` race using `RETURNING id`.~~ — **✅ Done**
+9. ~~Add indexes on `(company_id, status)` for speed.~~ — **✅ Done** (in `schema.sql`)
+10. ~~Move the big inline HTML into a shared branding helper.~~ — **✅ Done** (`branding.py`)
+11. Automate driver notifications (Twilio SMS) instead of copy-paste. — _Medium (still to do)_
 
 ### 🟢 Later (growth)
 12. Company self-onboarding screen, PDF invoices, per-company reports, backups on a paid Supabase tier.

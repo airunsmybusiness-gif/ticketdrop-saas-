@@ -1,30 +1,25 @@
+import logging
 import streamlit as st
-from db import execute, fetch_all, fetch_scalar
-from services.status import update_load_status, StatusError
 from datetime import datetime
+from db import execute, execute_returning, fetch_all
+from services.status import update_load_status, StatusError
+import auth
+import branding
 
-st.set_page_config(page_title="Dispatch - Rick's TicketDrop", page_icon="📋", layout="wide")
+st.set_page_config(page_title="Dispatch · TicketDrop", page_icon="📋", layout="wide")
+log = logging.getLogger("ticketdrop.dispatch")
 
-# Load CSS
-try:
-    with open("style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-except:
-    pass
+branding.apply_branding(auth.current_user()["company_id"] if auth.current_user() else None)
+user = auth.require("dispatch", "admin")
+company_id = user["company_id"]
+user_id, user_name, role = user["user_id"], user["user_name"], user["role"]
+branding.apply_branding(company_id)
+auth.sidebar_account()
 
 st.markdown("""
 <h1 style="font-size: 2rem; margin-bottom: 0;">📋 Dispatch Board</h1>
 <p style="color: #9CA3AF; margin-top: 5px;">Send load requests to drivers</p>
 """, unsafe_allow_html=True)
-
-password = st.sidebar.text_input("Password", type="password")
-if password != st.secrets.get("DISPATCH_PASSWORD", "dispatch123"):
-    st.warning("🔒 Enter dispatch password in sidebar")
-    st.stop()
-
-company_id = st.session_state.get('company_id', 1)
-user_id, user_name, role = 2, "Dispatch", "dispatch"
-st.sidebar.success("✓ Authenticated")
 
 def get_options(category):
     items = fetch_all("SELECT value FROM settings WHERE company_id=:cid AND category=:cat AND active=TRUE ORDER BY value", {"cid": company_id, "cat": category})
@@ -65,15 +60,21 @@ with st.form("new_load"):
             st.error("Add customers in Settings first")
         else:
             driver_id = drivers.get(driver_name_sel)
-            execute("""
-                INSERT INTO loads (company_id, customer, pickup_location, delivery_location, driver_id, truck, trailer, notes, status, created_by)
-                VALUES (:cid, :cust, :pickup, :delivery, :driver, :truck, :trailer, :notes, 'ASSIGNED', :user)
-            """, {"cid": company_id, "cust": customer, "pickup": pickup, "delivery": delivery, "driver": driver_id, "truck": truck, "trailer": trailer, "notes": notes, "user": user_id})
-            load_id = fetch_scalar("SELECT MAX(id) FROM loads WHERE company_id = :cid", {"cid": company_id})
-            execute("INSERT INTO load_status_history (load_id, new_status, changed_by, changed_by_name, reason) VALUES (:lid, 'ASSIGNED', :uid, :name, 'Load request sent')", {"lid": load_id, "uid": user_id, "name": user_name})
-            
+            try:
+                load_id = execute_returning("""
+                    INSERT INTO loads (company_id, customer, pickup_location, delivery_location, driver_id, truck, trailer, notes, status, created_by)
+                    VALUES (:cid, :cust, :pickup, :delivery, :driver, :truck, :trailer, :notes, 'ASSIGNED', :user)
+                    RETURNING id
+                """, {"cid": company_id, "cust": customer, "pickup": pickup, "delivery": delivery, "driver": driver_id, "truck": truck, "trailer": trailer, "notes": notes, "user": user_id})
+                execute("INSERT INTO load_status_history (load_id, new_status, changed_by, changed_by_name, reason) VALUES (:lid, 'ASSIGNED', :uid, :name, 'Load request sent')", {"lid": load_id, "uid": user_id, "name": user_name})
+            except Exception as e:
+                log.exception("Failed to create load")
+                st.error("Could not send the load. Please try again.")
+                st.caption(f"Details: {e}")
+                st.stop()
+
             st.success(f"✅ Load #{load_id} sent to {driver_name_sel}")
-            
+
             sms = f"""🚛 LOAD REQUEST #{load_id}
 
 Customer: {customer}

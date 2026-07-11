@@ -1,30 +1,23 @@
+import logging
 import streamlit as st
 from datetime import date, datetime
-from db import execute, fetch_all, fetch_one, fetch_scalar
+from db import execute, fetch_all, fetch_one
 from services.status import update_load_status, StatusError
+import auth
+import branding
 
-st.set_page_config(page_title="Driver", page_icon="🚚", layout="wide")
+st.set_page_config(page_title="Driver · TicketDrop", page_icon="🚚", layout="wide")
+log = logging.getLogger("ticketdrop.driver")
+
+branding.apply_branding(auth.current_user()["company_id"] if auth.current_user() else None)
+# Drivers sign in with their Name + PIN on the shared login screen.
+user = auth.require("driver")
+company_id = user["company_id"]
+driver_id, driver_name, role = user["user_id"], user["user_name"], "driver"
+branding.apply_branding(company_id)
+auth.sidebar_account()
+
 st.title("🚚 Driver Portal")
-
-company_id = st.session_state.get('company_id', 1)
-
-drivers = fetch_all("SELECT id, name FROM users WHERE company_id=:cid AND role='driver' AND active=TRUE", {"cid": company_id})
-driver_options = {d[1]: d[0] for d in drivers} if drivers else {}
-
-if not driver_options:
-    st.warning("No drivers configured. Add drivers in Settings.")
-    st.stop()
-
-driver_name = st.sidebar.selectbox("Your Name", list(driver_options.keys()))
-pin = st.sidebar.text_input("PIN", type="password", max_chars=4)
-
-if pin != st.secrets.get("DRIVER_PIN", "1234"):
-    st.warning("Enter your 4-digit PIN")
-    st.stop()
-
-driver_id = driver_options[driver_name]
-role = "driver"
-st.sidebar.success(f"✓ {driver_name}")
 
 tab1, tab2, tab3 = st.tabs(["📬 New Requests", "🚛 My Active Load", "📄 History"])
 
@@ -119,7 +112,7 @@ with tab2:
         with st.form("ticket_form"):
             st.markdown("#### 📋 Ticket Info")
             h1, h2, h3 = st.columns(3)
-            ticket_num = h1.text_input("Rick's Ticket #", placeholder="361334")
+            ticket_num = h1.text_input("Ticket #", placeholder="361334")
             cust_ticket = h2.text_input("Customer Ticket #", placeholder="268169")
             ticket_date = h3.date_input("Date", value=date.today())
             po_number = h1.text_input("PO # (if applicable)", placeholder="Optional")
@@ -173,8 +166,9 @@ with tab2:
                 elif actual_vol <= 0:
                     st.error("Enter actual volume")
                 elif not ticket_num:
-                    st.error("Enter Rick's Ticket #")
+                    st.error("Enter your Ticket #")
                 else:
+                  try:
                     execute("""
                         INSERT INTO tickets (
                             company_id, load_id, ticket_number, customer_ticket_number, ticket_date,
@@ -214,15 +208,20 @@ with tab2:
                         execute("UPDATE loads SET po_number = :po WHERE id = :id", {"po": po_number, "id": lid})
                     if safety_number:
                         execute("UPDATE loads SET safety_number = :sn WHERE id = :id", {"sn": safety_number, "id": lid})
-                    
+
                     try:
                         update_load_status(lid, 'COMPLETED', driver_id, driver_name, role, f"Ticket #{ticket_num} submitted")
-                    except:
-                        pass
-                    
+                    except StatusError as e:
+                        # Ticket saved; load status couldn't advance. Log it, don't lose the ticket.
+                        log.warning("Load %s status not advanced after ticket submit: %s", lid, e)
+
                     st.success("✅ Ticket submitted successfully!")
                     st.balloons()
                     st.rerun()
+                  except Exception as e:
+                    log.exception("Failed to submit ticket for load %s", lid)
+                    st.error("Could not submit the ticket. Nothing was saved — please try again.")
+                    st.caption(f"Details: {e}")
 
 with tab3:
     st.markdown("### 📄 My Completed Tickets")
