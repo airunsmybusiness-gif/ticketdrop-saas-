@@ -1,6 +1,4 @@
 import streamlit as st
-import sys
-sys.path.insert(0, '/Users/lilibethsejera/Downloads/ticketdrop_saas')
 from db import execute, fetch_all, fetch_scalar
 from services.status import update_load_status, StatusError
 from datetime import datetime

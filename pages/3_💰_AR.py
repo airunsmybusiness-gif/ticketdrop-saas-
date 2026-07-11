@@ -1,6 +1,4 @@
 import streamlit as st
-import sys
-sys.path.insert(0, '/Users/lilibethsejera/Downloads/ticketdrop_saas')
 import pandas as pd
 from db import fetch_all
 from services.status import update_ticket_status, StatusError

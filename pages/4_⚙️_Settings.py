@@ -1,6 +1,4 @@
 import streamlit as st
-import sys
-sys.path.insert(0, '/Users/lilibethsejera/Downloads/ticketdrop_saas')
 from db import execute, fetch_all
 st.set_page_config(page_title="Settings", page_icon="⚙️", layout="wide")
 st.title("⚙️ Settings")

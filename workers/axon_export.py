@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, '/Users/lilibethsejera/Downloads/ticketdrop_saas')
 import pandas as pd
 import hashlib
 from datetime import datetime
