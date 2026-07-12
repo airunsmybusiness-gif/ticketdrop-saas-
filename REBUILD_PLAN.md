@@ -78,13 +78,14 @@ two env vars → Deploy, root directory = `web/`) or Railway (works too — same
 
 | Page | URL | State |
 |------|-----|-------|
-| Landing page | `/` | ✅ Done — dark premium hero, feature grid, 4-step "how it works", CTA. Conversion-focused copy aimed at hauling owners. |
-| Office login | `/login` | ✅ UI done, wired to Supabase Auth email/password (`signInWithPassword`). Create office users in Supabase → Authentication → Add user. |
-| Driver PIN login | `/driver/login` | ✅ UI done (name + big glove-friendly PIN pad). Posts to `/api/auth/driver` — a small route you add in Phase 2 that checks the bcrypt `pin_hash` in your existing `users` table. |
-| Admin dashboard | `/dashboard` | ✅ Skeleton — stat cards + recent-loads list with mock data, ready to wire to Supabase queries. |
-| Driver home | `/driver` | ✅ Skeleton — new-request and active-load cards with Accept / Start actions, phone-first layout. |
+| Landing page | `/` | ✅ Done — industrial navy + safety-orange hero, feature grid, 4-step "how it works", CTA. |
+| Office PIN login | `/dashboard/login` | ✅ Working — Name + PIN pad for dispatch/admin/AR against the existing users table. (`/login` keeps the optional Supabase email flow for later.) |
+| Driver PIN login | `/driver/login` | ✅ Working — verifies bcrypt `pin_hash`, sets a signed httpOnly session cookie. |
+| Dispatch dashboard | `/dashboard` | ✅ Working — live stats, job board with hazard indicators and inline driver assignment, driver list with assignments, 15s polling with stale-data banner. |
+| Dispatch form | `/dispatch` | ✅ Working — create a job order (customer, route, product, est. volume, hazards, notes), assign a driver now or later; full audit history. |
+| Driver home | `/driver` | ✅ Working — live loads with dispatch hazards shown before Accept; Accept/Start/Complete with field ticket (hazards, photo, signature) and an offline outbox. |
 
-Everything builds clean (`npm run build` → 6 static routes, no errors).
+Everything builds clean under strict TypeScript; flows verified end-to-end in a real browser against Postgres.
 
 ---
 

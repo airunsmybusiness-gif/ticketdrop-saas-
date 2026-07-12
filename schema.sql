@@ -186,6 +186,13 @@ CREATE TABLE IF NOT EXISTS invoices (
 CREATE INDEX IF NOT EXISTS idx_invoices_company ON invoices (company_id, created_at);
 
 -- ============================================================
+-- 5b) WEB DISPATCH FORM  (job-order details captured at dispatch)
+-- ============================================================
+ALTER TABLE loads ADD COLUMN IF NOT EXISTS product          TEXT;
+ALTER TABLE loads ADD COLUMN IF NOT EXISTS estimated_volume NUMERIC;
+ALTER TABLE loads ADD COLUMN IF NOT EXISTS hazards          TEXT[];  -- known site hazards at dispatch time
+
+-- ============================================================
 -- 6) FIELD TICKET PDF  (hazards checklist + backup load photo)
 -- ============================================================
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS hazards         TEXT[];  -- ticked hazard labels

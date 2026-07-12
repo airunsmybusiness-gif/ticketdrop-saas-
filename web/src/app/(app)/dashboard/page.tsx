@@ -7,7 +7,8 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw, LogOut, MapPin, Users, WifiOff } from "lucide-react";
+import Link from "next/link";
+import { RefreshCw, LogOut, MapPin, Users, WifiOff, Plus, AlertTriangle } from "lucide-react";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ function fetchT(url: string, init?: RequestInit): Promise<Response> {
 type Job = {
   id: number; customer: string; pickup_location: string | null;
   delivery_location: string | null; truck: string | null; trailer: string | null;
+  product: string | null; hazards: string[] | null;
   status: string; status_changed_at: string; driver_name: string | null;
 };
 type Driver = { id: number; name: string; load_id: number | null; customer: string | null; load_status: string | null };
@@ -28,12 +30,12 @@ type Stats = { pending: string; active: string; completed_today: string; tickets
 type Data = { user: string; role: string; company: string; stats: Stats; jobs: Job[]; drivers: Driver[]; time: string };
 
 const tone: Record<string, "amber" | "brand" | "green" | "grey"> = {
-  ASSIGNED: "amber", ACCEPTED: "brand", IN_PROGRESS: "brand",
+  REQUESTED: "amber", ASSIGNED: "amber", ACCEPTED: "brand", IN_PROGRESS: "brand",
   COMPLETED: "green", DECLINED: "grey",
 };
 const label: Record<string, string> = {
-  ASSIGNED: "Awaiting ack", ACCEPTED: "Accepted", IN_PROGRESS: "In progress",
-  COMPLETED: "Completed", DECLINED: "Declined",
+  REQUESTED: "Unassigned", ASSIGNED: "Awaiting ack", ACCEPTED: "Accepted",
+  IN_PROGRESS: "In progress", COMPLETED: "Completed", DECLINED: "Declined",
 };
 
 function ago(iso: string): string {
@@ -93,7 +95,7 @@ export default function DashboardPage() {
 
   const s = data.stats;
   const stats = [
-    { label: "Awaiting ack", value: s.pending, accent: "text-amber-400" },
+    { label: "Waiting", value: s.pending, accent: "text-amber-400" },
     { label: "Active hauls", value: s.active, accent: "text-brand-light" },
     { label: "Completed today", value: s.completed_today, accent: "text-ok" },
     { label: "Tickets to review", value: s.tickets_to_review, accent: "text-foreground" },
@@ -111,6 +113,11 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/dispatch">
+            <Button size="sm">
+              <Plus className="h-4 w-4" /> New load
+            </Button>
+          </Link>
           <Button variant="secondary" size="sm" onClick={refresh}>
             <RefreshCw className="h-4 w-4" /> Refresh
           </Button>
@@ -145,28 +152,43 @@ export default function DashboardPage() {
             <span className="text-xs text-muted">{data.jobs.length} loads</span>
           </div>
           {data.jobs.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-muted">
-              No loads yet today. Dispatch one from the Streamlit app (web dispatch form is next on the roadmap).
-            </p>
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-muted">No loads on the board.</p>
+              <Link href="/dispatch" className="mt-3 inline-block">
+                <Button size="sm"><Plus className="h-4 w-4" /> Dispatch the first load</Button>
+              </Link>
+            </div>
           ) : (
             <div className="divide-y divide-white/5">
               {data.jobs.map((j) => (
-                <div key={j.id} className="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div key={j.id} className="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="truncate font-medium">
                       <span className="text-brand-light">#{j.id}</span> · {j.customer}
+                      {j.hazards && j.hazards.length > 0 && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-xs text-amber-400"
+                              title={j.hazards.join(", ")}>
+                          <AlertTriangle className="h-3.5 w-3.5" /> {j.hazards.length}
+                        </span>
+                      )}
                     </p>
                     <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted">
                       <MapPin className="h-3.5 w-3.5 shrink-0" />
                       {j.pickup_location || "—"} → {j.delivery_location || "—"}
+                      {j.product && <span className="text-muted/80">· {j.product}</span>}
                     </p>
                     <p className="mt-0.5 text-sm text-muted">
                       {j.driver_name || "Unassigned"} · {j.truck || "—"}/{j.trailer || "—"} · {ago(j.status_changed_at)}
                     </p>
                   </div>
-                  <Badge tone={tone[j.status] ?? "grey"} className="self-start sm:self-center">
-                    {label[j.status] ?? j.status}
-                  </Badge>
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    {(j.status === "REQUESTED" || j.status === "DECLINED") && (
+                      <AssignControl job={j} drivers={data.drivers} onDone={refresh} />
+                    )}
+                    <Badge tone={tone[j.status] ?? "grey"}>
+                      {label[j.status] ?? j.status}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
@@ -204,5 +226,56 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Inline driver assignment for unassigned / declined loads.           */
+/* ------------------------------------------------------------------ */
+function AssignControl({ job, drivers, onDone }: {
+  job: Job;
+  drivers: Driver[];
+  onDone: () => void;
+}) {
+  const [driverId, setDriverId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(false);
+
+  async function assign() {
+    if (!driverId) return;
+    setBusy(true);
+    setErr(false);
+    try {
+      const res = await fetchT("/api/dispatch/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ load_id: job.id, driver_id: Number(driverId) }),
+      });
+      if (!res.ok) { setErr(true); return; }
+      onDone();
+    } catch {
+      setErr(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <span className="flex items-center gap-2">
+      <select
+        aria-label={`Assign driver to load ${job.id}`}
+        className={`h-9 rounded-lg border bg-surface-2 px-2 text-sm text-foreground focus:border-brand focus:outline-none ${err ? "border-red-500/60" : "border-white/10"}`}
+        value={driverId}
+        onChange={(e) => setDriverId(e.target.value)}
+      >
+        <option value="">Driver…</option>
+        {drivers.map((d) => (
+          <option key={d.id} value={d.id}>{d.name}</option>
+        ))}
+      </select>
+      <Button size="sm" onClick={assign} disabled={busy || !driverId}>
+        {busy ? "…" : "Assign"}
+      </Button>
+    </span>
   );
 }

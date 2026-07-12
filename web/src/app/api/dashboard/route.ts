@@ -18,7 +18,7 @@ export const GET = handle("dashboard", async () => {
     db().query(`SELECT name FROM companies WHERE id = $1`, [cid]),
     db().query(
       `SELECT
-         COUNT(*) FILTER (WHERE status = 'ASSIGNED')                            AS pending,
+         COUNT(*) FILTER (WHERE status IN ('REQUESTED','ASSIGNED'))             AS pending,
          COUNT(*) FILTER (WHERE status IN ('ACCEPTED','IN_PROGRESS'))           AS active,
          COUNT(*) FILTER (WHERE status = 'COMPLETED'
                           AND DATE(status_changed_at) = CURRENT_DATE)           AS completed_today,
@@ -29,16 +29,16 @@ export const GET = handle("dashboard", async () => {
     ),
     db().query(
       `SELECT l.id, l.customer, l.pickup_location, l.delivery_location,
-              l.truck, l.trailer, l.status, l.status_changed_at,
-              u.name AS driver_name
+              l.truck, l.trailer, l.product, l.hazards, l.status,
+              l.status_changed_at, u.name AS driver_name
        FROM loads l LEFT JOIN users u ON u.id = l.driver_id
        WHERE l.company_id = $1
-         AND (l.status IN ('ASSIGNED','ACCEPTED','IN_PROGRESS')
+         AND (l.status IN ('REQUESTED','ASSIGNED','ACCEPTED','IN_PROGRESS')
               OR (l.status IN ('COMPLETED','DECLINED')
                   AND DATE(l.status_changed_at) = CURRENT_DATE))
        ORDER BY CASE l.status
-                  WHEN 'ASSIGNED' THEN 0 WHEN 'IN_PROGRESS' THEN 1
-                  WHEN 'ACCEPTED' THEN 2 ELSE 3 END,
+                  WHEN 'REQUESTED' THEN 0 WHEN 'ASSIGNED' THEN 1
+                  WHEN 'IN_PROGRESS' THEN 2 WHEN 'ACCEPTED' THEN 3 ELSE 4 END,
                 l.status_changed_at DESC
        LIMIT 60`,
       [cid]

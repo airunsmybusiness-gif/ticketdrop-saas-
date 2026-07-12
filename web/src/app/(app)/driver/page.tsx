@@ -26,6 +26,9 @@ type Load = {
   delivery_location: string | null;
   truck: string | null;
   trailer: string | null;
+  product: string | null;
+  estimated_volume: string | null;
+  hazards: string[] | null;
   notes: string | null;
   status: "ASSIGNED" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED";
 };
@@ -256,6 +259,17 @@ export default function DriverPage() {
               {l.pickup_location || "—"} → {l.delivery_location || "—"}
             </span>
             <span className="block">{l.truck || "—"} / {l.trailer || "—"}</span>
+            {(l.product || l.estimated_volume) && (
+              <span className="block">
+                {l.product || "Product TBD"}
+                {l.estimated_volume ? ` · est. ${l.estimated_volume} m³` : ""}
+              </span>
+            )}
+            {l.hazards && l.hazards.length > 0 && (
+              <span className="block rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-300">
+                ⚠️ {l.hazards.join(" · ")}
+              </span>
+            )}
             {l.notes && <span className="block text-amber-300/90">📝 {l.notes}</span>}
           </CardDescription>
 

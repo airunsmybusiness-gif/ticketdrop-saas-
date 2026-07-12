@@ -12,7 +12,7 @@ export const GET = handle("driver_loads", async () => {
 
   const { rows } = await db().query(
     `SELECT id, customer, pickup_location, delivery_location, truck, trailer,
-            notes, status, created_at
+            product, estimated_volume, hazards, notes, status, created_at
      FROM loads
      WHERE company_id = $1 AND driver_id = $2
        AND (status IN ('ASSIGNED','ACCEPTED','IN_PROGRESS')
