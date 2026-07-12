@@ -84,6 +84,7 @@ two env vars → Deploy, root directory = `web/`) or Railway (works too — same
 | Dispatch dashboard | `/dashboard` | ✅ Working — live stats, job board with hazard indicators and inline driver assignment, driver list with assignments, 15s polling with stale-data banner. |
 | Dispatch form | `/dispatch` | ✅ Working — create a job order (customer, route, product, est. volume, hazards, notes), assign a driver now or later; full audit history. |
 | Driver home | `/driver` | ✅ Working — live loads with dispatch hazards shown before Accept; Accept/Start/Complete with field ticket (hazards, photo, signature) and an offline outbox. |
+| Billing / AR | `/billing` | ✅ Working — review submitted tickets (details, hazards, load photo), one-click Approve or Dispute, create invoices per customer with editable rates, printable/PDF invoice pages, invoice history. |
 
 Everything builds clean under strict TypeScript; flows verified end-to-end in a real browser against Postgres.
 

@@ -26,7 +26,7 @@ type Job = {
   status: string; status_changed_at: string; driver_name: string | null;
 };
 type Driver = { id: number; name: string; load_id: number | null; customer: string | null; load_status: string | null };
-type Stats = { pending: string; active: string; completed_today: string; tickets_to_review: string };
+type Stats = { pending: string; active: string; completed_today: string; tickets_to_review: string; ready_to_invoice: string };
 type Data = { user: string; role: string; company: string; stats: Stats; jobs: Job[]; drivers: Driver[]; time: string };
 
 const tone: Record<string, "amber" | "brand" | "green" | "grey"> = {
@@ -95,10 +95,11 @@ export default function DashboardPage() {
 
   const s = data.stats;
   const stats = [
-    { label: "Waiting", value: s.pending, accent: "text-amber-400" },
-    { label: "Active hauls", value: s.active, accent: "text-brand-light" },
-    { label: "Completed today", value: s.completed_today, accent: "text-ok" },
-    { label: "Tickets to review", value: s.tickets_to_review, accent: "text-foreground" },
+    { label: "Waiting", value: s.pending, accent: "text-amber-400", href: "/dashboard" },
+    { label: "Active hauls", value: s.active, accent: "text-brand-light", href: "/dashboard" },
+    { label: "Completed today", value: s.completed_today, accent: "text-ok", href: "/dashboard" },
+    { label: "Tickets to review", value: s.tickets_to_review, accent: "text-foreground", href: "/billing" },
+    { label: "Ready to invoice", value: s.ready_to_invoice, accent: "text-brand-light", href: "/billing" },
   ];
 
   return (
@@ -135,12 +136,14 @@ export default function DashboardPage() {
       )}
 
       {/* summary stats */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {stats.map((x) => (
-          <Card key={x.label} className="p-5">
-            <CardDescription className="text-xs uppercase tracking-wider">{x.label}</CardDescription>
-            <p className={`mt-2 text-4xl font-semibold tabular-nums ${x.accent}`}>{x.value}</p>
-          </Card>
+          <Link key={x.label} href={x.href}>
+            <Card className="p-5 transition-colors hover:border-brand/40">
+              <CardDescription className="text-xs uppercase tracking-wider">{x.label}</CardDescription>
+              <p className={`mt-2 text-4xl font-semibold tabular-nums ${x.accent}`}>{x.value}</p>
+            </Card>
+          </Link>
         ))}
       </div>
 

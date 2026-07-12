@@ -23,7 +23,9 @@ export const GET = handle("dashboard", async () => {
          COUNT(*) FILTER (WHERE status = 'COMPLETED'
                           AND DATE(status_changed_at) = CURRENT_DATE)           AS completed_today,
          (SELECT COUNT(*) FROM tickets t
-           WHERE t.company_id = $1 AND t.status = 'SUBMITTED')                  AS tickets_to_review
+           WHERE t.company_id = $1 AND t.status = 'SUBMITTED')                  AS tickets_to_review,
+         (SELECT COUNT(*) FROM tickets t
+           WHERE t.company_id = $1 AND t.status = 'READY_FOR_INVOICE')          AS ready_to_invoice
        FROM loads WHERE company_id = $1`,
       [cid]
     ),

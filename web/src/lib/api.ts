@@ -50,6 +50,38 @@ export function handle(
   };
 }
 
+// Same wrapper for dynamic routes (e.g. /api/thing/[id]) where Next passes
+// route params as a second argument.
+export function handleWithParams<P>(
+  name: string,
+  fn: (req: Request, params: P, ctx: Ctx) => Promise<NextResponse | Response>
+) {
+  return async (req: Request, segment: { params: Promise<P> }): Promise<NextResponse | Response> => {
+    const requestId = randomUUID().slice(0, 8);
+    const started = Date.now();
+    try {
+      const params = await segment.params;
+      const res = await fn(req, params, { requestId });
+      log.info(`${name}_ok`, { requestId, ms: Date.now() - started, status: res.status });
+      return res;
+    } catch (e) {
+      if (e instanceof ApiError) {
+        log.warn(`${name}_rejected`, { requestId, status: e.status, reason: e.message });
+        return NextResponse.json({ error: e.message, requestId }, { status: e.status });
+      }
+      log.error(`${name}_failed`, {
+        requestId,
+        ms: Date.now() - started,
+        error: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+      });
+      return NextResponse.json(
+        { error: "Something went wrong on our side. Please try again.", requestId },
+        { status: 500 }
+      );
+    }
+  };
+}
+
 // ---------------------------------------------------------------- validation
 // Small, readable validators — throw ApiError(400, ...) with a human message.
 export async function readJson<T = Record<string, unknown>>(req: Request): Promise<T> {
