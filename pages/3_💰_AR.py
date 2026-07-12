@@ -4,6 +4,7 @@ import pandas as pd
 from db import fetch_all, fetch_one
 from services.status import update_ticket_status, StatusError
 from services.invoice import build_invoice_data, generate_invoice_pdf
+from services.field_ticket import generate_field_ticket_pdf
 from workers.axon_export import generate_axon_csv, get_export_history
 import auth
 import branding
@@ -27,21 +28,35 @@ with tab1:
     if tickets:
         for t in tickets:
             tid, tnum, cust, driver, vol, tdate, status = t
-            c1, c2, c3 = st.columns([3, 1, 1])
+            c1, c2, c3, c4 = st.columns([3, 1, 1, 1])
             c1.markdown(f"**#{tid}** Ticket: {tnum or 'N/A'} | {cust} | {driver} | {vol}m³")
             c1.caption(f"Date: {tdate} | Status: `{status}`")
-            if c2.button("✅ Verify", key=f"verify_{tid}"):
+            if c2.button("📄 PDF", key=f"ftpdf_{tid}"):
+                try:
+                    fname, pdf = generate_field_ticket_pdf(tid, company_id)
+                    st.session_state["ar_ft_pdf"] = {"filename": fname, "pdf": pdf, "tnum": tnum or tid}
+                except Exception as e:
+                    log.exception("Field ticket PDF failed for ticket %s", tid)
+                    st.error("Could not generate the field ticket PDF.")
+                    st.caption(f"Details: {e}")
+            if c3.button("✅ Verify", key=f"verify_{tid}"):
                 try:
                     update_ticket_status(tid, 'VERIFIED', user_id, user_name, role)
                     st.rerun()
                 except StatusError as e:
                     st.error(str(e))
-            if c3.button("⚠️ Dispute", key=f"dispute_{tid}"):
+            if c4.button("⚠️ Dispute", key=f"dispute_{tid}"):
                 try:
                     update_ticket_status(tid, 'DISPUTED', user_id, user_name, role, "Needs review")
                     st.rerun()
                 except StatusError as e:
                     st.error(str(e))
+        ft = st.session_state.get("ar_ft_pdf")
+        if ft:
+            st.success(f"✅ Field Ticket #{ft['tnum']} PDF ready (includes hazards & load photo)")
+            st.download_button(f"📥 Download {ft['filename']}", data=ft["pdf"],
+                               file_name=ft["filename"], mime="application/pdf",
+                               type="primary", use_container_width=True)
     else:
         st.info("No tickets awaiting verification")
 with tab2:

@@ -184,3 +184,11 @@ CREATE TABLE IF NOT EXISTS invoices (
     created_at     TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_invoices_company ON invoices (company_id, created_at);
+
+-- ============================================================
+-- 6) FIELD TICKET PDF  (hazards checklist + backup load photo)
+-- ============================================================
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS hazards         TEXT[];  -- ticked hazard labels
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS hazard_notes    TEXT;    -- free text for "Other"
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS load_photo      BYTEA;   -- backup photo of the load
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS load_photo_mime TEXT;

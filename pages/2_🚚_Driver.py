@@ -3,6 +3,7 @@ import streamlit as st
 from datetime import date, datetime
 from db import execute, fetch_all, fetch_one
 from services.status import update_load_status, StatusError
+from services.field_ticket import HAZARD_ITEMS, generate_field_ticket_pdf
 import auth
 import branding
 
@@ -155,7 +156,26 @@ with tab2:
             est_vol = v1.number_input("Estimated Volume (m³)", value=40.0)
             actual_vol = v2.number_input("Actual Volume (m³)", value=0.0)
             road_ban = v3.checkbox("Road Ban")
-            
+
+            st.markdown("---")
+            st.markdown("#### ⚠️ Site & Load Hazards")
+            st.caption("Tick every hazard present on this job — these print on the field ticket")
+            hz1, hz2 = st.columns(2)
+            hazard_checked = []
+            half = (len(HAZARD_ITEMS) + 1) // 2
+            for i, item in enumerate(HAZARD_ITEMS):
+                col = hz1 if i < half else hz2
+                if col.checkbox(item, key=f"hz_{lid}_{i}"):
+                    hazard_checked.append(item)
+            hazard_notes = st.text_input("Hazard notes (required if 'Other' is ticked)",
+                                         placeholder="Describe any other hazard...")
+
+            st.markdown("---")
+            st.markdown("#### 📸 Backup Photo of the Load")
+            st.caption("Take or upload one photo of the loaded product / paperwork (JPG or PNG)")
+            load_photo = st.file_uploader("Load photo", type=["jpg", "jpeg", "png"],
+                                          key=f"photo_{lid}", label_visibility="collapsed")
+
             st.markdown("---")
             st.markdown("#### ✍️ Signature")
             signature = st.text_input("Driver Signature (type full name)", placeholder=driver_name)
@@ -167,6 +187,8 @@ with tab2:
                     st.error("Enter actual volume")
                 elif not ticket_num:
                     st.error("Enter your Ticket #")
+                elif "Other (see notes)" in hazard_checked and not hazard_notes:
+                    st.error("You ticked 'Other' — describe the hazard in the notes field")
                 else:
                   try:
                     execute("""
@@ -178,6 +200,7 @@ with tab2:
                             offloaded_at, offload_tank, offload_riser, arrive_offload_datetime, depart_offload_datetime,
                             product_description, commodity, transport_placard, last_contained, density, bsw_cut,
                             estimated_volume, actual_volume, hours_charged, road_ban,
+                            hazards, hazard_notes, load_photo, load_photo_mime,
                             driver_signature, signature_datetime, status
                         ) VALUES (
                             :cid, :lid, :tnum, :ctnum, :tdate,
@@ -187,6 +210,7 @@ with tab2:
                             :offloaded, :otank, :oriser, :arr_o, :dep_o,
                             :product, :commodity, :placard, :last, :density, :bsw,
                             :est, :actual, :hours, :road,
+                            :hazards, :haznotes, :photo, :photomime,
                             :sig, NOW(), 'SUBMITTED'
                         )
                     """, {
@@ -200,6 +224,9 @@ with tab2:
                         "product": product, "commodity": commodity, "placard": placard, "last": last_contained,
                         "density": density, "bsw": bsw,
                         "est": est_vol, "actual": actual_vol, "hours": hours, "road": road_ban,
+                        "hazards": hazard_checked or None, "haznotes": hazard_notes or None,
+                        "photo": load_photo.getvalue() if load_photo else None,
+                        "photomime": load_photo.type if load_photo else None,
                         "sig": signature
                     })
                     
@@ -240,5 +267,19 @@ with tab3:
             c1, c2 = st.columns([4, 1])
             c1.markdown(f"**Ticket #{tnum or 'N/A'}** | {cust} | {vol}m³")
             c1.caption(f"Status: `{status}` | Submitted: {created}")
+            if c2.button("📄 PDF", key=f"ftpdf_{tid}"):
+                try:
+                    fname, pdf = generate_field_ticket_pdf(tid, company_id)
+                    st.session_state["ft_pdf"] = {"filename": fname, "pdf": pdf, "tnum": tnum or tid}
+                except Exception as e:
+                    log.exception("Field ticket PDF failed for ticket %s", tid)
+                    st.error("Could not generate the PDF. Please try again.")
+                    st.caption(f"Details: {e}")
+        ft = st.session_state.get("ft_pdf")
+        if ft:
+            st.success(f"✅ Field Ticket #{ft['tnum']} PDF ready")
+            st.download_button(f"📥 Download {ft['filename']}", data=ft["pdf"],
+                               file_name=ft["filename"], mime="application/pdf",
+                               type="primary", use_container_width=True)
     else:
         st.info("No completed tickets yet")
