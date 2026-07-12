@@ -6,16 +6,16 @@ type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-brand text-white hover:bg-brand-dark shadow-[0_0_24px_rgba(139,92,246,0.35)]",
+    "bg-brand text-white hover:bg-brand-dark shadow-[0_0_24px_rgba(var(--brand-rgb),0.30)]",
   secondary: "bg-surface-2 text-foreground hover:bg-white/10 border border-white/10",
   ghost: "text-muted hover:text-foreground hover:bg-white/5",
   outline: "border border-white/15 text-foreground hover:border-brand hover:text-brand-light",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-8 px-3 text-sm",
-  md: "h-10 px-5 text-sm",
-  lg: "h-12 px-7 text-base",
+  sm: "h-9 px-3 text-sm",
+  md: "h-11 px-5 text-[15px]",
+  lg: "h-13 min-h-12 px-7 text-base",
 };
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

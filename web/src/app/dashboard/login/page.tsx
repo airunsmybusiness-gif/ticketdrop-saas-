@@ -1,5 +1,7 @@
 "use client";
 
+// Office sign-in (dispatch / admin / AR): same Name + PIN accounts as the
+// Streamlit app, same pad as the driver login.
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -7,12 +9,7 @@ import { Truck, Delete } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 
-/**
- * Driver login: pick your name, tap your PIN. Big targets, gloves-friendly.
- * The PIN check calls /api/auth/driver (see REBUILD_PLAN.md) which verifies
- * the bcrypt pin_hash in the users table — same accounts as the Streamlit app.
- */
-export default function DriverLoginPage() {
+export default function OfficeLoginPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
@@ -21,7 +18,7 @@ export default function DriverLoginPage() {
 
   function press(d: string) {
     setError(null);
-    if (pin.length < 6) setPin(pin + d);
+    if (pin.length < 8) setPin(pin + d);
   }
 
   async function submit() {
@@ -32,13 +29,13 @@ export default function DriverLoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/driver", {
+      const res = await fetch("/api/auth/office", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, pin }),
       });
       if (!res.ok) throw new Error();
-      router.push("/driver");
+      router.push("/dashboard");
     } catch {
       setError("Wrong name or PIN. Please try again.");
       setPin("");
@@ -59,44 +56,31 @@ export default function DriverLoginPage() {
         </Link>
 
         <div className="rounded-xl border border-white/10 bg-surface p-8">
-          <h1 className="text-xl font-semibold">Driver login</h1>
-          <p className="mt-1 text-sm text-muted">Your name + your PIN. That&apos;s it.</p>
+          <h1 className="text-xl font-semibold">Office sign in</h1>
+          <p className="mt-1 text-sm text-muted">Dispatch, billing and admin.</p>
 
           <div className="mt-6 space-y-4">
             <div>
               <Label htmlFor="name">Your name</Label>
-              <Input
-                id="name"
-                placeholder="e.g. John D."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <Input id="name" placeholder="e.g. Dispatch" value={name}
+                     onChange={(e) => setName(e.target.value)} />
             </div>
-
             <div>
               <Label>PIN</Label>
               <div className="flex h-12 items-center justify-center gap-3 rounded-lg border border-white/10 bg-surface-2 text-2xl tracking-[0.5em]">
                 {pin ? "•".repeat(pin.length) : <span className="text-base text-muted/50">— — — —</span>}
               </div>
             </div>
-
             <div className="grid grid-cols-3 gap-2">
-              {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
-                <Button key={d} variant="secondary" size="lg" onClick={() => press(d)}>
-                  {d}
-                </Button>
+              {["1","2","3","4","5","6","7","8","9"].map((d) => (
+                <Button key={d} variant="secondary" size="lg" onClick={() => press(d)}>{d}</Button>
               ))}
-              <Button variant="ghost" size="lg" onClick={() => setPin("")}>
-                Clear
-              </Button>
-              <Button variant="secondary" size="lg" onClick={() => press("0")}>
-                0
-              </Button>
+              <Button variant="ghost" size="lg" onClick={() => setPin("")}>Clear</Button>
+              <Button variant="secondary" size="lg" onClick={() => press("0")}>0</Button>
               <Button variant="ghost" size="lg" onClick={() => setPin(pin.slice(0, -1))} aria-label="Backspace">
                 <Delete className="h-5 w-5" />
               </Button>
             </div>
-
             {error && <p className="text-sm text-red-400">{error}</p>}
             <Button className="w-full" size="lg" onClick={submit} disabled={loading}>
               {loading ? "Checking…" : "Sign in"}
@@ -105,9 +89,9 @@ export default function DriverLoginPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-muted">
-          Office staff?{" "}
-          <Link href="/dashboard/login" className="text-brand-light hover:underline">
-            Office sign in
+          Driving today?{" "}
+          <Link href="/driver/login" className="text-brand-light hover:underline">
+            Use the driver login
           </Link>
         </p>
       </div>

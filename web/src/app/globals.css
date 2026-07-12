@@ -1,19 +1,23 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   TicketDrop design tokens — premium dark SaaS.
+   TicketDrop design tokens — rugged industrial dark theme.
+   Deep navy steel + safety orange + status greens.
    Change --brand once to re-theme the whole site.
 ------------------------------------------------------------------- */
 :root {
-  --background: #07070b;
-  --surface: #0d0d14;
-  --surface-2: #13131d;
-  --border: rgba(255, 255, 255, 0.08);
-  --foreground: #f4f4f6;
-  --muted: #9ca3af;
-  --brand: #8b5cf6;
-  --brand-light: #a78bfa;
-  --brand-dark: #6d28d9;
+  --background: #070c14;      /* near-black navy */
+  --surface: #0d1522;        /* steel panel */
+  --surface-2: #141f30;      /* raised panel */
+  --border: rgba(148, 163, 184, 0.12);
+  --foreground: #f2f5f9;
+  --muted: #8b98ab;
+  --brand: #f97316;          /* safety orange */
+  --brand-light: #fb923c;
+  --brand-lighter: #fdba74;
+  --brand-dark: #c2410c;
+  --brand-rgb: 249, 115, 22;
+  --ok: #22c55e;             /* completed green */
 }
 
 @theme inline {
@@ -24,7 +28,9 @@
   --color-muted: var(--muted);
   --color-brand: var(--brand);
   --color-brand-light: var(--brand-light);
+  --color-brand-lighter: var(--brand-lighter);
   --color-brand-dark: var(--brand-dark);
+  --color-ok: var(--ok);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -36,21 +42,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* faint dotted grid used on hero + auth pages */
+/* faint blueprint grid used on hero + auth pages */
 .bg-grid {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(148, 163, 184, 0.09) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
-/* soft radial brand glow */
+/* soft radial safety-orange glow */
 .glow {
   background: radial-gradient(
-    600px circle at 50% 0%,
-    rgba(139, 92, 246, 0.18),
+    620px circle at 50% 0%,
+    rgba(249, 115, 22, 0.13),
     transparent 60%
   );
 }
 
 ::selection {
-  background: rgba(139, 92, 246, 0.4);
+  background: rgba(249, 115, 22, 0.4);
 }

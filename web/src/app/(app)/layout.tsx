@@ -38,17 +38,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="border-t border-white/5 p-4 text-xs text-muted">
-          Signed in as <span className="text-foreground">Admin</span>
+          Built for the field.
         </div>
       </aside>
 
       {/* main */}
       <div className="flex-1">
-        <header className="flex h-16 items-center justify-between border-b border-white/5 px-6 md:justify-end">
-          <Link href="/" className="font-semibold md:hidden">TicketDrop</Link>
-          <span className="rounded-full border border-white/10 bg-surface-2 px-3 py-1 text-xs text-muted">
-            Rick&apos;s Oilfield Hauling
-          </span>
+        <header className="flex h-16 items-center border-b border-white/5 px-6 md:hidden">
+          <Link href="/" className="font-semibold">TicketDrop</Link>
         </header>
         <main className="p-6 md:p-8">{children}</main>
       </div>

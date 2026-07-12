@@ -71,7 +71,7 @@ export default function Home() {
             <a href="#how" className="hover:text-foreground">How it works</a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/login">
+            <Link href="/dashboard/login">
               <Button variant="ghost" size="sm">Sign in</Button>
             </Link>
             <Link href="/driver/login">
@@ -100,7 +100,7 @@ export default function Home() {
             drivers will actually use.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/login">
+            <Link href="/dashboard/login">
               <Button size="lg">
                 Start dispatching <ArrowRight className="h-4 w-4" />
               </Button>
@@ -175,7 +175,7 @@ export default function Home() {
               in under an hour.
             </p>
             <div className="mt-8">
-              <Link href="/login">
+              <Link href="/dashboard/login">
                 <Button size="lg">
                   Get started <ArrowRight className="h-4 w-4" />
                 </Button>
