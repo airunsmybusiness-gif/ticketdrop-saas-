@@ -159,3 +159,28 @@ CREATE INDEX IF NOT EXISTS idx_loads_company_status   ON loads (company_id, stat
 CREATE INDEX IF NOT EXISTS idx_tickets_company_status ON tickets (company_id, status);
 CREATE INDEX IF NOT EXISTS idx_users_company_role     ON users (company_id, role, active);
 CREATE INDEX IF NOT EXISTS idx_settings_company_cat   ON settings (company_id, category, active);
+
+-- ============================================================
+-- 5) INVOICING  (PDF invoices + per-company rates)
+-- ============================================================
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS rate_per_m3    NUMERIC DEFAULT 0;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS rate_per_hour  NUMERIC DEFAULT 0;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS tax_rate       NUMERIC DEFAULT 5;      -- percent
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS tax_label      TEXT DEFAULT 'GST';
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_prefix TEXT DEFAULT 'INV-';
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_terms  TEXT DEFAULT 'Payment due within 30 days.';
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id             SERIAL PRIMARY KEY,
+    company_id     INTEGER NOT NULL REFERENCES companies(id),
+    invoice_number TEXT NOT NULL,
+    customer_name  TEXT,
+    ticket_ids     INTEGER[],
+    subtotal       NUMERIC,
+    tax            NUMERIC,
+    total          NUMERIC,
+    notes          TEXT,
+    created_by     INTEGER,
+    created_at     TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_invoices_company ON invoices (company_id, created_at);

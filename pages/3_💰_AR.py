@@ -1,8 +1,9 @@
 import logging
 import streamlit as st
 import pandas as pd
-from db import fetch_all
+from db import fetch_all, fetch_one
 from services.status import update_ticket_status, StatusError
+from services.invoice import build_invoice_data, generate_invoice_pdf
 from workers.axon_export import generate_axon_csv, get_export_history
 import auth
 import branding
@@ -17,7 +18,9 @@ branding.apply_branding(company_id)
 auth.sidebar_account()
 
 st.title("💰 AR / Billing")
-tab1, tab2, tab3, tab4 = st.tabs(["📋 Review Tickets", "✅ Ready for AXON", "📤 Export to AXON", "📊 Export History"])
+tab1, tab2, tab5, tab3, tab4 = st.tabs(
+    ["📋 Review Tickets", "✅ Ready for Invoice", "🧾 Create Invoice", "📤 Export to AXON", "📊 Export History"]
+)
 with tab1:
     st.markdown("### Submitted Tickets (Need Verification)")
     tickets = fetch_all("SELECT t.id, t.ticket_number, t.customer_name, t.operator_name, t.actual_volume, t.ticket_date, t.status FROM tickets t WHERE t.company_id = :cid AND t.status = 'SUBMITTED' ORDER BY t.ticket_date DESC", {"cid": company_id})
@@ -49,8 +52,8 @@ with tab2:
             for t in verified:
                 try:
                     update_ticket_status(t[0], 'READY_FOR_INVOICE', user_id, user_name, role)
-                except:
-                    pass
+                except StatusError as e:
+                    log.warning("Ticket %s not marked ready: %s", t[0], e)
             st.rerun()
         for t in verified:
             tid, tnum, cust, vol, tdate = t
@@ -64,6 +67,70 @@ with tab2:
                     st.error(str(e))
     else:
         st.info("No verified tickets")
+with tab5:
+    st.markdown("### 🧾 Create a PDF Invoice")
+    st.caption("Groups your 'Ready for Invoice' tickets by customer. Pick a customer, confirm the rates, and download a branded PDF.")
+    ready = fetch_all(
+        "SELECT id, ticket_number, customer_name, actual_volume, hours_charged, ticket_date "
+        "FROM tickets WHERE company_id=:cid AND status='READY_FOR_INVOICE' "
+        "ORDER BY customer_name, ticket_date",
+        {"cid": company_id},
+    )
+    if not ready:
+        st.info("No tickets ready to invoice. Verify tickets and mark them 'Ready for Invoice' first.")
+    else:
+        customers = sorted({(r[2] or "Unknown") for r in ready})
+        cust = st.selectbox("Customer", customers)
+        cust_tickets = [r for r in ready if (r[2] or "Unknown") == cust]
+        st.dataframe(
+            pd.DataFrame([(r[1] or f"#{r[0]}", r[3], r[4], r[5]) for r in cust_tickets],
+                         columns=["Ticket #", "Volume m³", "Hours", "Date"]),
+            use_container_width=True, hide_index=True,
+        )
+        comp = fetch_one("SELECT rate_per_m3, rate_per_hour FROM companies WHERE id=:id", {"id": company_id})
+        d_m3, d_hr = (float(comp[0] or 0), float(comp[1] or 0)) if comp else (0.0, 0.0)
+        cc1, cc2 = st.columns(2)
+        r_m3 = cc1.number_input("Rate per m³ ($)", value=d_m3, step=5.0, min_value=0.0, key="inv_rm3")
+        r_hr = cc2.number_input("Rate per hour ($)", value=d_hr, step=5.0, min_value=0.0, key="inv_rhr")
+        if d_m3 == 0 and d_hr == 0 and r_m3 == 0 and r_hr == 0:
+            st.warning("No rates set. Enter them above, or set defaults in Settings → Company.")
+
+        ids = [r[0] for r in cust_tickets]
+        try:
+            preview = build_invoice_data(company_id, ids, rate_per_m3=r_m3, rate_per_hour=r_hr)
+            p1, p2, p3 = st.columns(3)
+            p1.metric("Subtotal", f"${preview['subtotal']:,.2f}")
+            p2.metric(f"{preview['tax_label']} ({preview['tax_rate']:g}%)", f"${preview['tax']:,.2f}")
+            p3.metric("Total", f"${preview['total']:,.2f}")
+        except Exception as e:
+            log.exception("Invoice preview failed")
+            st.error("Could not build the preview.")
+            st.caption(f"Details: {e}")
+
+        mark_invoiced = st.checkbox("Mark these tickets as INVOICED after generating", value=True)
+        if st.button("🧾 Generate PDF Invoice", type="primary", use_container_width=True):
+            try:
+                number, filename, pdf_bytes, data = generate_invoice_pdf(
+                    company_id, ids, rate_per_m3=r_m3, rate_per_hour=r_hr, user_id=user_id)
+                if mark_invoiced:
+                    for tid in ids:
+                        try:
+                            update_ticket_status(tid, 'INVOICED', user_id, user_name, role, f"Invoice {number}")
+                        except StatusError as e:
+                            log.warning("Ticket %s not marked invoiced: %s", tid, e)
+                st.session_state["last_invoice"] = {
+                    "filename": filename, "pdf": pdf_bytes, "number": number, "total": data["total"]}
+            except Exception as e:
+                log.exception("Invoice generation failed")
+                st.error("Could not generate the invoice. Please try again.")
+                st.caption(f"Details: {e}")
+
+    # Persistent download of the most recently generated invoice (survives reruns)
+    li = st.session_state.get("last_invoice")
+    if li:
+        st.success(f"✅ Invoice {li['number']} ready — ${li['total']:,.2f} total")
+        st.download_button(f"📥 Download {li['filename']}", data=li["pdf"], file_name=li["filename"],
+                           mime="application/pdf", type="primary", use_container_width=True)
 with tab3:
     st.markdown("### 📤 AXON Export")
     st.markdown("Generate CSV file for AXON import. Only exports tickets marked 'Ready for Invoice'.")

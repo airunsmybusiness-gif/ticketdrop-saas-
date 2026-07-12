@@ -21,10 +21,14 @@ def manage_company():
     st.markdown("### 🏢 Company & Branding")
     st.caption("These control the name, tagline, and color shown across the whole app.")
     row = fetch_one(
-        "SELECT name, tagline, primary_color, phone, address FROM companies WHERE id=:id",
+        "SELECT name, tagline, primary_color, phone, address, "
+        "rate_per_m3, rate_per_hour, tax_rate, tax_label, invoice_prefix, invoice_terms "
+        "FROM companies WHERE id=:id",
         {"id": company_id},
     )
-    name, tagline, color, phone, address = (row or ("TicketDrop", "Dispatch & Field Ticketing", "#8B5CF6", "", ""))
+    (name, tagline, color, phone, address, r_m3, r_hr, tax_rate, tax_label,
+     inv_prefix, inv_terms) = (row or ("TicketDrop", "Dispatch & Field Ticketing",
+        "#8B5CF6", "", "", 0, 0, 5, "GST", "INV-", "Payment due within 30 days."))
 
     with st.form("company_form"):
         c1, c2 = st.columns(2)
@@ -33,11 +37,26 @@ def manage_company():
         color = c1.color_picker("Brand Color", value=color or "#8B5CF6")
         phone = c2.text_input("Phone", value=phone or "")
         address = st.text_input("Address", value=address or "")
+
+        st.markdown("**Invoice settings** (used on PDF invoices)")
+        i1, i2, i3 = st.columns(3)
+        r_m3 = i1.number_input("Rate per m³ ($)", value=float(r_m3 or 0), step=5.0, min_value=0.0)
+        r_hr = i2.number_input("Rate per hour ($)", value=float(r_hr or 0), step=5.0, min_value=0.0)
+        tax_rate = i3.number_input("Tax rate (%)", value=float(tax_rate or 0), step=0.5, min_value=0.0)
+        j1, j2 = st.columns(2)
+        tax_label = j1.text_input("Tax label", value=tax_label or "GST")
+        inv_prefix = j2.text_input("Invoice number prefix", value=inv_prefix or "INV-")
+        inv_terms = st.text_input("Invoice terms / footer", value=inv_terms or "Payment due within 30 days.")
+
         if st.form_submit_button("💾 Save Branding", type="primary"):
             try:
                 execute(
-                    "UPDATE companies SET name=:n, tagline=:t, primary_color=:c, phone=:p, address=:a WHERE id=:id",
-                    {"n": name, "t": tagline, "c": color, "p": phone or None, "a": address or None, "id": company_id},
+                    "UPDATE companies SET name=:n, tagline=:t, primary_color=:c, phone=:p, address=:a, "
+                    "rate_per_m3=:rm, rate_per_hour=:rh, tax_rate=:tr, tax_label=:tl, "
+                    "invoice_prefix=:ip, invoice_terms=:it WHERE id=:id",
+                    {"n": name, "t": tagline, "c": color, "p": phone or None, "a": address or None,
+                     "rm": r_m3, "rh": r_hr, "tr": tax_rate, "tl": tax_label or "GST",
+                     "ip": inv_prefix or "INV-", "it": inv_terms or None, "id": company_id},
                 )
                 branding.get_branding.clear()  # drop cached branding so changes show now
                 st.success("✅ Branding saved. Refresh to see it everywhere.")
