@@ -4,19 +4,14 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { createDriverSession } from "@/lib/session";
+import { handle, readJson, requireString, ApiError } from "@/lib/api";
+import { log } from "@/lib/log";
 
-export async function POST(req: Request) {
-  let body: { name?: string; pin?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
-  }
-  const name = (body.name || "").trim();
-  const pin = (body.pin || "").trim();
-  if (!name || pin.length < 4) {
-    return NextResponse.json({ error: "Name and a 4+ digit PIN are required" }, { status: 400 });
-  }
+export const POST = handle("driver_login", async (req, { requestId }) => {
+  const body = await readJson(req);
+  const name = requireString(body.name, "Name", 100);
+  const pin = requireString(body.pin, "PIN", 20);
+  if (pin.length < 4) throw new ApiError(400, "PIN must be at least 4 digits");
 
   // Case-insensitive name match among active drivers. Also accepts a partial
   // first-name match when it's unambiguous ("John" → "John Driver").
@@ -29,14 +24,16 @@ export async function POST(req: Request) {
   );
   if (rows.length !== 1) {
     // 0 = unknown name; >1 = ambiguous — same response so names can't be probed
-    return NextResponse.json({ error: "Wrong name or PIN" }, { status: 401 });
+    log.warn("driver_login_failed", { requestId, matches: rows.length });
+    throw new ApiError(401, "Wrong name or PIN");
   }
   const u = rows[0];
   const ok = u.pin_hash
     ? await bcrypt.compare(pin, u.pin_hash)
     : Boolean(u.pin) && pin === String(u.pin); // legacy plaintext fallback
   if (!ok) {
-    return NextResponse.json({ error: "Wrong name or PIN" }, { status: 401 });
+    log.warn("driver_login_failed", { requestId, user_id: u.id });
+    throw new ApiError(401, "Wrong name or PIN");
   }
 
   await createDriverSession({
@@ -45,5 +42,6 @@ export async function POST(req: Request) {
     company_id: u.company_id,
     role: u.role,
   });
+  log.info("driver_login_success", { requestId, user_id: u.id, company_id: u.company_id });
   return NextResponse.json({ ok: true, name: u.name });
-}
+});

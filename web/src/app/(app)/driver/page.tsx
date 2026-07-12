@@ -34,6 +34,14 @@ type OutboxItem = { key: string; url: string; body: unknown; label: string };
 
 const CACHE_KEY = "td_loads_cache";
 const OUTBOX_KEY = "td_outbox";
+const POLL_MS = 30_000; // auto-refresh the list every 30s while the tab is open
+const FETCH_TIMEOUT_MS = 15_000; // in a dead zone, fail fast into the outbox
+
+// fetch that gives up after FETCH_TIMEOUT_MS instead of hanging forever on
+// one bar of signal — a timeout is treated exactly like being offline.
+function fetchT(url: string, init?: RequestInit): Promise<Response> {
+  return fetch(url, { ...init, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+}
 
 function readOutbox(): OutboxItem[] {
   try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || "[]"); } catch { return []; }
@@ -59,7 +67,7 @@ export default function DriverPage() {
   // ------------------------------------------------------------- data
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/driver/loads");
+      const res = await fetchT("/api/driver/loads");
       if (res.status === 401) { router.push("/driver/login"); return; }
       const data = await res.json();
       setLoads(data.loads);
@@ -85,7 +93,7 @@ export default function DriverPage() {
         const item = items[0];
         let res: Response;
         try {
-          res = await fetch(item.url, {
+          res = await fetchT(item.url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(item.body),
@@ -116,9 +124,20 @@ export default function DriverPage() {
     const onOffline = () => setOffline(true);
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
+    // Poll for dispatch updates while the app is open (reliable in the field:
+    // polling recovers by itself after any dropped connection).
+    const poll = setInterval(() => {
+      if (document.visibilityState === "visible") syncOutbox().then(refresh);
+    }, POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") syncOutbox().then(refresh);
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refresh, syncOutbox]);
 
@@ -128,7 +147,7 @@ export default function DriverPage() {
     setBusy(true);
     setMessage(null);
     try {
-      const res = await fetch(url, {
+      const res = await fetchT(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -167,7 +186,7 @@ export default function DriverPage() {
   }
 
   async function logout() {
-    try { await fetch("/api/auth/logout", { method: "POST" }); } catch { /* ok */ }
+    try { await fetchT("/api/auth/logout", { method: "POST" }); } catch { /* ok */ }
     localStorage.removeItem(CACHE_KEY);
     router.push("/driver/login");
   }

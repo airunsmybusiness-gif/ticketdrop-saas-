@@ -2,10 +2,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDriverSession } from "@/lib/session";
+import { handle, ApiError } from "@/lib/api";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+export const GET = handle("driver_loads", async () => {
   const s = await getDriverSession();
-  if (!s) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!s) throw new ApiError(401, "Not signed in");
 
   const { rows } = await db().query(
     `SELECT id, customer, pickup_location, delivery_location, truck, trailer,
@@ -21,4 +24,4 @@ export async function GET() {
     [s.company_id, s.user_id]
   );
   return NextResponse.json({ driver: s.name, loads: rows });
-}
+});
